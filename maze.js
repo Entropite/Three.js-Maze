@@ -13,7 +13,7 @@ function init() {
     const pathBase = "./public/";
     const baseFilename = pathBase + filename;
     const typeOfFile = ".jpg";
-    const sides = ["Front", "Back", "Top", "Bottom", "Right", "Left"];
+    const sides = ["Back", "Front", "Top", "Bottom", "Right", "Left"];
     const pathStrings = sides.map((side) => {
       return baseFilename + "_" + side + typeOfFile;
     });
