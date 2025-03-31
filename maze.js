@@ -1,5 +1,8 @@
 let scene, camera, renderer, controls, clock, skyboxTexture;
 
+const SPEED = 2;
+
+const MOUSE_SENSITIVITY = 0.001;
 const WALL_WIDTH = 5;
 const WALL_HEIGHT = 8;
 
@@ -43,31 +46,35 @@ function init() {
     0.1,
     1000
   );
-  camera.position.set(0, 5, 20);
-  camera.lookAt(5, 0, 0);
+  camera.position.set(0, 2, 0);
+  camera.rotation.set(0, 0, 0);
+  //camera.lookAt(,0,0)
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setClearColor(0x000000);
 
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.domElement.id = "canvas";
   document.body.appendChild(renderer.domElement);
 
-  // Add first person controls
-  controls = new THREE.FirstPersonControls(camera, renderer.domElement);
-  controls.lookSpeed = 0.25;
-  controls.movementSpeed = 10;
-  controls.lookVertical = true;
+  // Lock pointer on click
+  renderer.domElement.addEventListener("click", () => {
+    renderer.domElement.requestPointerLock();
+  });
 
-  clock = new THREE.Clock();
+  document.addEventListener("keydown", onKeyDown);
+  document.addEventListener("mousemove", onMouseMove);
+  //window.addEventListener('resize', onWindowResize);
 
   // Add lighting to the scene
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
   directionalLight.position.set(-100, 200, 100);
   scene.add(directionalLight);
 
+  const ambientLight = new THREE.AmbientLight(0xffcccc, 0.2);
+  scene.add(ambientLight);
+
   scene.add(createPlane());
-  scene.add(createWall(-10, 0, 10, 0));
+  scene.add(createWall(-10, -50, 10, -50));
   animate();
 }
 
@@ -79,6 +86,7 @@ function createWall(fromX, fromZ, toX, toZ) {
   );
   const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xaaff33 });
   const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+  wall.position.set((fromX + toX) / 2, WALL_HEIGHT / 2, (fromZ + toZ) / 2);
 
   return wall;
 }
@@ -95,9 +103,54 @@ function createPlane() {
 }
 
 function animate() {
-  controls.update(clock.getDelta());
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onMouseMove(event) {
+  if (document.pointerLockElement == renderer.domElement) {
+    camera.rotateY(-event.movementX * MOUSE_SENSITIVITY);
+    // camera.rotateX(-event.movementY * MOUSE_SENSITIVITY);
+  }
+}
+
+function onKeyDown(event) {
+  const keyCode = event.code;
+
+  // Get the direction that the camera is pointing in
+  const direction = new THREE.Vector3();
+  camera.getWorldDirection(direction);
+
+  // The rightward direction will be perpindicular to both the camera direction and the vertical direction
+  // Right hand rule: index finger = camera direction, thumb = vertical direction, perpindicular cross product = middle finger
+  const right = new THREE.Vector3();
+  right.crossVectors(new THREE.Vector3(0, 1, 0), direction);
+
+  switch (keyCode) {
+    case "KeyW":
+      // forwards
+      camera.position.add(direction.multiplyScalar(SPEED));
+      break;
+    case "KeyS":
+      // backwards
+      camera.position.sub(direction.multiplyScalar(SPEED));
+      break;
+    case "KeyA":
+      // left
+      camera.position.add(right.multiplyScalar(SPEED));
+      break;
+    case "KeyD":
+      // right
+      camera.position.sub(right.multiplyScalar(SPEED));
+      break;
+  }
 }
 
 init();
