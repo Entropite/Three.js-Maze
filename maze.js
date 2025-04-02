@@ -1,4 +1,4 @@
-let scene, camera, renderer, controls, clock, skyboxTexture;
+let scene, camera, renderer, controls, clock, skybox, skyboxTexture, bushTexture;
 
 const SPEED = 2;
 
@@ -37,7 +37,7 @@ function init() {
 
   const skyboxMaterial = createMaterialArray(imageSkybox);
   const geometrySkybox = new THREE.BoxGeometry(1000, 1000, 1000);
-  const skybox = new THREE.Mesh(geometrySkybox, skyboxMaterial);
+  skybox = new THREE.Mesh(geometrySkybox, skyboxMaterial);
   scene.add(skybox);
 
   camera = new THREE.PerspectiveCamera(
@@ -66,11 +66,7 @@ function init() {
   //window.addEventListener('resize', onWindowResize);
 
   // Add lighting to the scene
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(-100, 200, 100);
-  scene.add(directionalLight);
-
-  const ambientLight = new THREE.AmbientLight(0xffcccc, 0.2);
+  const ambientLight = new THREE.AmbientLight(0xffcccc, 0.8);
   scene.add(ambientLight);
 
   scene.add(createPlane());
@@ -84,7 +80,12 @@ function createWall(fromX, fromZ, toX, toZ) {
     WALL_HEIGHT,
     WALL_WIDTH
   );
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xaaff33 });
+  let bushTexture = new THREE.TextureLoader().load("./public/Bush_Texture.jpg");
+  // Make the texture repeat
+  bushTexture.wrapS = THREE.RepeatWrapping;
+  bushTexture.wrapT = THREE.RepeatWrapping;
+  bushTexture.repeat.set(2, 2);
+  const wallMaterial = new THREE.MeshStandardMaterial({map: bushTexture});
   const wall = new THREE.Mesh(wallGeometry, wallMaterial);
   wall.position.set((fromX + toX) / 2, WALL_HEIGHT / 2, (fromZ + toZ) / 2);
 
@@ -103,6 +104,7 @@ function createPlane() {
 }
 
 function animate() {
+  skybox.rotation.y += 0.0001;
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
@@ -117,7 +119,7 @@ function onWindowResize() {
 function onMouseMove(event) {
   if (document.pointerLockElement == renderer.domElement) {
     camera.rotateY(-event.movementX * MOUSE_SENSITIVITY);
-    // camera.rotateX(-event.movementY * MOUSE_SENSITIVITY);
+    camera.rotateX(-event.movementY * MOUSE_SENSITIVITY);
   }
 }
 
@@ -127,9 +129,8 @@ function onKeyDown(event) {
   // Get the direction that the camera is pointing in
   const direction = new THREE.Vector3();
   camera.getWorldDirection(direction);
+  direction.y = 0;
 
-  // The rightward direction will be perpindicular to both the camera direction and the vertical direction
-  // Right hand rule: index finger = camera direction, thumb = vertical direction, perpindicular cross product = middle finger
   const right = new THREE.Vector3();
   right.crossVectors(new THREE.Vector3(0, 1, 0), direction);
 
