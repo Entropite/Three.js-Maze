@@ -7,5 +7,14 @@
   },
   "author": "Marizza",
   "license": "ISC",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Entropite/Three.js-Maze.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Entropite/Three.js-Maze/issues"
+  },
+  "homepage": "https://github.com/Entropite/Three.js-Maze#readme",
   "description": ""
 }
