@@ -14,7 +14,7 @@ function init() {
   const imageSkybox = "DaylightBox";
 
   function pathStrings(filename) {
-    const pathBase = "./public/";
+    const pathBase = "public/";
     const baseFilename = pathBase + filename;
     const typeOfFile = ".jpg";
     const sides = ["Back", "Front", "Top", "Bottom", "Right", "Left"];
@@ -96,7 +96,7 @@ function createHedge() {
    }
  
    const hedgeGeometry = new THREE.BoxGeometry(WALL_WIDTH, WALL_HEIGHT, WALL_WIDTH);
-   const hedgeTexture = new THREE.TextureLoader().load("./public/Bush_Texture.jpg");
+   const hedgeTexture = new THREE.TextureLoader().load("public/Bush_Texture.jpg");
  
    // Make the texture repeat
    hedgeTexture.wrapS = THREE.RepeatWrapping;
