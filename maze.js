@@ -1,10 +1,11 @@
-let scene, camera, renderer, controls, clock, skybox, skyboxTexture, bushTexture;
+let scene, camera, renderer, controls, clock, skybox, skyboxTexture, maze;
 
 const SPEED = 2;
 
 const MOUSE_SENSITIVITY = 0.001;
 const WALL_WIDTH = 5;
 const WALL_HEIGHT = 8;
+const MAZE_SIZE = 10;
 
 function init() {
   scene = new THREE.Scene();
@@ -46,9 +47,8 @@ function init() {
     0.1,
     1000
   );
-  camera.position.set(0, 2, 0);
-  camera.rotation.set(0, 0, 0);
-  //camera.lookAt(,0,0)
+  camera.position.set(4, 3, -20);
+  camera.rotation.set(0, Math.PI, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
 
@@ -70,26 +70,58 @@ function init() {
   scene.add(ambientLight);
 
   scene.add(createPlane());
-  scene.add(createWall(-10, -50, 10, -50));
+
+  // Create the maze
+  maze = generateMaze(MAZE_SIZE, MAZE_SIZE);
+
+  // Make the maze have an entrance and exit
+  maze[1][0] = 0;
+  maze[2 * MAZE_SIZE - 1][2 * MAZE_SIZE] = 0;
+
+ 
+  scene.add(createHedge());
+  
   animate();
 }
 
-function createWall(fromX, fromZ, toX, toZ) {
-  const wallGeometry = new THREE.BoxGeometry(
-    Math.abs(toX - fromX),
-    WALL_HEIGHT,
-    WALL_WIDTH
-  );
-  let bushTexture = new THREE.TextureLoader().load("./public/Bush_Texture.jpg");
-  // Make the texture repeat
-  bushTexture.wrapS = THREE.RepeatWrapping;
-  bushTexture.wrapT = THREE.RepeatWrapping;
-  bushTexture.repeat.set(2, 2);
-  const wallMaterial = new THREE.MeshStandardMaterial({map: bushTexture});
-  const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-  wall.position.set((fromX + toX) / 2, WALL_HEIGHT / 2, (fromZ + toZ) / 2);
-
-  return wall;
+function createHedge() {
+   // Count the number of walls in the maze
+   let count = 0;
+   for (let i = 0; i < maze.length; i++) {
+     for (let j = 0; j < maze[i].length; j++) {
+       if (maze[i][j] == 1) {
+         count++;
+       }
+     }
+   }
+ 
+   const hedgeGeometry = new THREE.BoxGeometry(WALL_WIDTH, WALL_HEIGHT, WALL_WIDTH);
+   const hedgeTexture = new THREE.TextureLoader().load("./public/Bush_Texture.jpg");
+ 
+   // Make the texture repeat
+   hedgeTexture.wrapS = THREE.RepeatWrapping;
+   hedgeTexture.wrapT = THREE.RepeatWrapping;
+   hedgeTexture.repeat.set(2, 2);
+ 
+   const hedgeMaterial = new THREE.MeshStandardMaterial({map: hedgeTexture});
+   
+   const hedgeMesh = new THREE.InstancedMesh(hedgeGeometry, hedgeMaterial, count);
+ 
+   const tempWall = new THREE.Object3D();
+   let instanceCount = 0;
+   for (let i = 0; i < maze.length; i++) {
+     for (let j = 0; j < maze[i].length; j++) {
+       if (maze[i][j] === 1) {
+         tempWall.position.set(i * WALL_WIDTH, WALL_HEIGHT / 2, j * WALL_WIDTH);
+         tempWall.updateMatrix();
+         hedgeMesh.setMatrixAt(instanceCount, tempWall.matrix);
+         instanceCount++;
+       }
+     }
+   }
+ 
+   hedgeMesh.instanceMatrix.needsUpdate = true;
+   return hedgeMesh;
 }
 
 function createPlane() {
@@ -119,7 +151,7 @@ function onWindowResize() {
 function onMouseMove(event) {
   if (document.pointerLockElement == renderer.domElement) {
     camera.rotateY(-event.movementX * MOUSE_SENSITIVITY);
-    camera.rotateX(-event.movementY * MOUSE_SENSITIVITY);
+    //camera.rotateX(-event.movementY * MOUSE_SENSITIVITY);
   }
 }
 
