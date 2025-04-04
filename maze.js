@@ -8,6 +8,7 @@ const WALL_WIDTH = 5;
 const WALL_HEIGHT = 8;
 const MAZE_SIZE = 10;
 const MINIMAP_SIZE = 200; // Size of the minimap in pixels
+const PLAYER_RADIUS = 0.8; // Reduced from 1.5 for better maneuverability
 
 function init() {
   scene = new THREE.Scene();
@@ -190,7 +191,7 @@ function createPlane() {
   return plane;
 }
 
-
+// Modified animate function to include minimap rendering
 function animate() {
   // Update player marker position for minimap
   updatePlayerMarker();
@@ -229,6 +230,79 @@ function onMouseMove(event) {
   }
 }
 
+// Fixed collision detection function
+function checkCollision(position) {
+  // Expand search area to catch all potential walls
+  const searchRadius = Math.ceil(PLAYER_RADIUS / WALL_WIDTH) + 1;
+  
+  // Calculate grid position
+  const gridX = Math.floor(position.x / WALL_WIDTH);
+  const gridZ = Math.floor(position.z / WALL_WIDTH);
+  
+  // Check all surrounding grid cells
+  for (let i = gridX - searchRadius; i <= gridX + searchRadius; i++) {
+    for (let j = gridZ - searchRadius; j <= gridZ + searchRadius; j++) {
+      // Skip if outside maze bounds
+      if (i < 0 || i >= maze.length || j < 0 || j >= maze[0].length) {
+        continue;
+      }
+      
+      // If this is a wall, check for collision
+      if (maze[i][j] === 1) {
+        // Wall boundaries
+        const wallMinX = i * WALL_WIDTH - WALL_WIDTH/2;
+        const wallMaxX = i * WALL_WIDTH + WALL_WIDTH/2;
+        const wallMinZ = j * WALL_WIDTH - WALL_WIDTH/2;
+        const wallMaxZ = j * WALL_WIDTH + WALL_WIDTH/2;
+        
+        // Find closest point on wall to player
+        const closestX = Math.max(wallMinX, Math.min(position.x, wallMaxX));
+        const closestZ = Math.max(wallMinZ, Math.min(position.z, wallMaxZ));
+        
+        // Calculate distance from player to closest point
+        const dx = position.x - closestX;
+        const dz = position.z - closestZ;
+        const distanceSquared = dx * dx + dz * dz;
+        
+        // If distance is less than player radius, there's a collision
+        if (distanceSquared < PLAYER_RADIUS * PLAYER_RADIUS) {
+          return true;
+        }
+      }
+    }
+  }
+  
+  // No collision
+  return false;
+}
+
+// Simpler wall-sliding algorithm
+function getValidPosition(originalPos, newPos) {
+  // If no collision at the new position, it's valid
+  if (!checkCollision(newPos)) {
+    return newPos;
+  }
+  
+  // Try horizontal movement only
+  const horizontalPos = originalPos.clone();
+  horizontalPos.x = newPos.x;
+  
+  if (!checkCollision(horizontalPos)) {
+    return horizontalPos;
+  }
+  
+  // Try vertical movement only
+  const verticalPos = originalPos.clone();
+  verticalPos.z = newPos.z;
+  
+  if (!checkCollision(verticalPos)) {
+    return verticalPos;
+  }
+  
+  // Neither direction works, stay at original position
+  return originalPos.clone();
+}
+
 function onKeyDown(event) {
   const keyCode = event.code;
 
@@ -236,28 +310,99 @@ function onKeyDown(event) {
   const direction = new THREE.Vector3();
   camera.getWorldDirection(direction);
   direction.y = 0;
+  direction.normalize();
 
   const right = new THREE.Vector3();
   right.crossVectors(new THREE.Vector3(0, 1, 0), direction);
+  right.normalize();
 
+  // Store the original position
+  const originalPos = camera.position.clone();
+  let newPos = originalPos.clone();
+  
   switch (keyCode) {
     case "KeyW":
       // forwards
-      camera.position.add(direction.multiplyScalar(SPEED));
+      newPos.add(direction.clone().multiplyScalar(SPEED));
       break;
     case "KeyS":
       // backwards
-      camera.position.sub(direction.multiplyScalar(SPEED));
+      newPos.sub(direction.clone().multiplyScalar(SPEED));
       break;
     case "KeyA":
       // left
-      camera.position.add(right.multiplyScalar(SPEED));
+      newPos.add(right.clone().multiplyScalar(SPEED));
       break;
     case "KeyD":
       // right
-      camera.position.sub(right.multiplyScalar(SPEED));
+      newPos.sub(right.clone().multiplyScalar(SPEED));
       break;
+    default:
+      return; // Not a movement key, exit early
   }
+  
+  // Get valid position with wall sliding
+  const validPos = getValidPosition(originalPos, newPos);
+  camera.position.copy(validPos);
+}
+
+// Maze generation function using Depth-First Search algorithm
+function generateMaze(width, height) {
+  // Initialize maze with all walls
+  const maze = Array(width * 2 + 1).fill().map(() => Array(height * 2 + 1).fill(1));
+  
+  // Create a grid for the maze paths
+  for (let i = 0; i < width; i++) {
+    for (let j = 0; j < height; j++) {
+      maze[i * 2 + 1][j * 2 + 1] = 0;
+    }
+  }
+  
+  // DFS to carve paths
+  const stack = [{x: 0, y: 0}];
+  const visited = Array(width).fill().map(() => Array(height).fill(false));
+  visited[0][0] = true;
+  
+  while (stack.length > 0) {
+    const {x, y} = stack[stack.length - 1];
+    
+    // Get unvisited neighbors
+    const neighbors = [];
+    if (x > 0 && !visited[x-1][y]) neighbors.push({x: x-1, y: y, dir: 'left'});
+    if (x < width-1 && !visited[x+1][y]) neighbors.push({x: x+1, y: y, dir: 'right'});
+    if (y > 0 && !visited[x][y-1]) neighbors.push({x: x, y: y-1, dir: 'up'});
+    if (y < height-1 && !visited[x][y+1]) neighbors.push({x: x, y: y+1, dir: 'down'});
+    
+    if (neighbors.length > 0) {
+      // Choose random neighbor
+      const neighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
+      
+      // Remove wall between current cell and chosen neighbor
+      switch (neighbor.dir) {
+        case 'left':
+          maze[x * 2][y * 2 + 1] = 0;
+          break;
+        case 'right':
+          maze[x * 2 + 2][y * 2 + 1] = 0;
+          break;
+        case 'up':
+          maze[x * 2 + 1][y * 2] = 0;
+          break;
+        case 'down':
+          maze[x * 2 + 1][y * 2 + 2] = 0;
+          break;
+      }
+      
+      // Mark neighbor as visited and add to stack
+      visited[neighbor.x][neighbor.y] = true;
+      stack.push(neighbor);
+    } else {
+      // Backtrack
+      stack.pop();
+    }
+  }
+  
+  return maze;
 }
 
 init();
