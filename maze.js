@@ -1,6 +1,6 @@
 let scene, camera, renderer, controls, clock, skybox, skyboxTexture, maze;
 
-const SPEED = 2;
+const SPEED = 1;
 
 const MOUSE_SENSITIVITY = 0.001;
 const WALL_WIDTH = 5;
@@ -14,7 +14,7 @@ function init() {
   const imageSkybox = "DaylightBox";
 
   function pathStrings(filename) {
-    const pathBase = "public/";
+    const pathBase = "https://media.githubusercontent.com/media/Entropite/Three.js-Maze/master/public/";
     const baseFilename = pathBase + filename;
     const typeOfFile = ".jpg";
     const sides = ["Back", "Front", "Top", "Bottom", "Right", "Left"];
@@ -96,7 +96,7 @@ function createHedge() {
    }
  
    const hedgeGeometry = new THREE.BoxGeometry(WALL_WIDTH, WALL_HEIGHT, WALL_WIDTH);
-   const hedgeTexture = new THREE.TextureLoader().load("public/Bush_Texture.jpg");
+   const hedgeTexture = new THREE.TextureLoader().load("https://media.githubusercontent.com/media/Entropite/Three.js-Maze/master/public/Bush_Texture.jpg");
  
    // Make the texture repeat
    hedgeTexture.wrapS = THREE.RepeatWrapping;
@@ -127,7 +127,7 @@ function createHedge() {
 function createPlane() {
   const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
   const planeMaterial = new THREE.MeshStandardMaterial({
-    color: 0x565a5d,
+    color: 0x4a3a2d,
     side: THREE.FrontSide,
   });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
