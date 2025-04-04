@@ -20,22 +20,14 @@ function init() {
     const baseFilename = pathBase + filename;
     const typeOfFile = ".jpg";
     const sides = ["Back", "Front", "Top", "Bottom", "Right", "Left"];
-    const pathStrings = sides.map((side) => {
-      return baseFilename + "_" + side + typeOfFile;
-    });
-    return pathStrings;
+    return sides.map((side) => baseFilename + "_" + side + typeOfFile);
   }
 
   function createMaterialArray(filename) {
-    const imagePaths = pathStrings(filename);
-    const skyboxMaterial = imagePaths.map((image) => {
+    return pathStrings(filename).map((image) => {
       skyboxTexture = new THREE.TextureLoader().load(image);
-      return new THREE.MeshBasicMaterial({
-        map: skyboxTexture,
-        side: THREE.BackSide,
-      });
+      return new THREE.MeshBasicMaterial({ map: skyboxTexture, side: THREE.BackSide });
     });
-    return skyboxMaterial;
   }
 
   const skyboxMaterial = createMaterialArray(imageSkybox);
@@ -43,12 +35,7 @@ function init() {
   skybox = new THREE.Mesh(geometrySkybox, skyboxMaterial);
   scene.add(skybox);
 
-  camera = new THREE.PerspectiveCamera(
-    55,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
+  camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.set(4, 3, -20);
   camera.rotation.set(0, Math.PI, 0);
 
@@ -83,12 +70,14 @@ function createHedge() {
   let count = 0;
   for (let i = 0; i < maze.length; i++) {
     for (let j = 0; j < maze[i].length; j++) {
-      if (maze[i][j] == 1) count++;
+      if (maze[i][j] === 1) count++;
     }
   }
 
   const hedgeGeometry = new THREE.BoxGeometry(WALL_WIDTH, WALL_HEIGHT, WALL_WIDTH);
-  const hedgeTexture = new THREE.TextureLoader().load("https://media.githubusercontent.com/media/Entropite/Three.js-Maze/master/public/Bush_Texture.jpg");
+  const hedgeTexture = new THREE.TextureLoader().load(
+    "https://media.githubusercontent.com/media/Entropite/Three.js-Maze/master/public/Bush_Texture.jpg"
+  );
 
   hedgeTexture.wrapS = THREE.RepeatWrapping;
   hedgeTexture.wrapT = THREE.RepeatWrapping;
@@ -116,10 +105,7 @@ function createHedge() {
 
 function createPlane() {
   const planeGeometry = new THREE.PlaneGeometry(1000, 1000);
-  const planeMaterial = new THREE.MeshStandardMaterial({
-    color: 0x4a3a2d,
-    side: THREE.FrontSide,
-  });
+  const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x4a3a2d, side: THREE.FrontSide });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
   plane.rotateX(-Math.PI / 2);
   return plane;
@@ -160,7 +146,7 @@ function onKeyUp(event) {
 }
 
 function onMouseMove(event) {
-  if (document.pointerLockElement == renderer.domElement) {
+  if (document.pointerLockElement === renderer.domElement) {
     camera.rotateY(-event.movementX * MOUSE_SENSITIVITY);
   }
 }
@@ -200,16 +186,14 @@ function animate() {
     const newX = camera.position.x + moveVector.x;
     const newZ = camera.position.z + moveVector.z;
 
-    const buffer = 1.5;
+    const buffer = 0.8; 
 
-    if (
-      !isWallAtPosition(newX + buffer, newZ + buffer) &&
-      !isWallAtPosition(newX - buffer, newZ + buffer) &&
-      !isWallAtPosition(newX + buffer, newZ - buffer) &&
-      !isWallAtPosition(newX - buffer, newZ - buffer)
-    ) {
+    
+    if (!isWallAtPosition(newX, newZ)) {
       camera.position.x = newX;
       camera.position.z = newZ;
+    } else {
+      console.log("Blocked by wall at:", Math.floor(newX / WALL_WIDTH), Math.floor(newZ / WALL_WIDTH));
     }
   }
 
