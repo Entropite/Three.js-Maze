@@ -1,5 +1,3 @@
-const { color } = require("three/tsl");
-
 let scene, camera, renderer, controls, clock, skybox, skyboxTexture, maze;
 let minimapCamera, minimapRenderer, playerMarker;
 
@@ -72,7 +70,7 @@ function init() {
   //window.addEventListener('resize', onWindowResize);
 
   // Add lighting to the scene
-  const ambientLight = new THREE.AmbientLight(0xffcccc, 0.8);
+  const ambientLight = new THREE.AmbientLight(0xffcccc, 0.7);
   scene.add(ambientLight);
 
   scene.add(createPlane());
@@ -212,7 +210,7 @@ function createHedge() {
 
   for (let i = 0; i < maze.length; i++) {
     for (let j = 0; j < maze[i].length; j++) {
-      if (maze[i][j] === 1 && Math.random() < 0.1) {
+      if (maze[i][j] === 0 && Math.random() < 0.1) {
         const light = new THREE.PointLight(0xffdd99, 2, 5);
         light.position.set(i * WALL_WIDTH, WALL_HEIGHT * 0.8, j * WALL_WIDTH);
 
