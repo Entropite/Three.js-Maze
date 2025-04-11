@@ -94,9 +94,9 @@ function init() {
   
   loader = new THREE.OBJLoader()
 
-  loader.load("public/bunny.obj", function (obj) {obj.position.set(bunnyX * WALL_WIDTH, 2, bunnyY * WALL_WIDTH); obj.scale.set(10, 10, 10);scene.add(obj);});
+  loader.load("public/bunny.obj", function (obj) {obj.position.set(bunnyX * WALL_WIDTH, 2, bunnyY * WALL_WIDTH); obj.scale.set(30, 30, 30);scene.add(obj);});
 
-  scene.add(createPlinth(bunnyX * WALL_WIDTH, bunnyY * WALL_WIDTH, 2.2));
+  scene.add(createPlinth(bunnyX * WALL_WIDTH, bunnyY * WALL_WIDTH, 3.3));
 
   // Randomly generate a teapot and a plinth somewhere in the maze
   let teapotX, teapotY;
@@ -110,13 +110,16 @@ function init() {
     }
   }
 
-  loader.load("public/teapot.obj", function (obj) {obj.position.set(teapotX * WALL_WIDTH, 2, teapotY * WALL_WIDTH); obj.scale.set(0.6, 0.6, 0.6); scene.add(obj);});
+  loader.load("public/teapot.obj", function (obj) {obj.position.set(teapotX * WALL_WIDTH, 2, teapotY * WALL_WIDTH); obj.scale.set(1, 1, 1); scene.add(obj);});
 
   scene.add(createPlinth(teapotX * WALL_WIDTH, teapotY * WALL_WIDTH, 2.2));
 
   // Make the maze have an entrance and exit
   maze[1][0] = 0;
   maze[2 * MAZE_SIZE - 1][2 * MAZE_SIZE] = 0;
+
+  // Add shovel
+  loader.load("public/shovel.obj", function (obj) {obj.position.set(-1, 1.5, -3.3); obj.scale.set(0.2, 0.2, 0.2); obj.rotateX(Math.PI / 4); scene.add(obj);});
 
   scene.add(createHedge());
 
