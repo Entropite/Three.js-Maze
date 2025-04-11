@@ -238,7 +238,7 @@ function createPlane() {
   );
   terrainTexture.wrapS = THREE.RepeatWrapping;
   terrainTexture.wrapT = THREE.RepeatWrapping;
-  terrainTexture.repeat.set(2, 2);
+  terrainTexture.repeat.set(50, 50);
 
   const planeMaterial = new THREE.MeshStandardMaterial({
     map: terrainTexture,
@@ -251,11 +251,11 @@ function createPlane() {
 
 // Adding grass
 function createGrass() {
-  const grassCount = 9000000; // Number of grass blades
-  const grassGeometry = new THREE.PlaneGeometry(0.01, 0.5);
+  const grassCount = 20_000; // Number of grass blades
+  const grassGeometry = new THREE.PlaneGeometry(0.05, 1.2);
 
   const grassMaterial = new THREE.MeshStandardMaterial({
-    color: 0x006400,
+    color: 0x00aa00,
     side: THREE.DoubleSide,
     transparent: true,
     opacity: 0.8,
@@ -270,7 +270,7 @@ function createGrass() {
   const grassObject = new THREE.Object3D();
 
   // Plane area which would have grass
-  const planeSize = 500;
+  const planeSize = 100;
 
   for (let i = 0; i < grassCount; i++) {
     grassObject.position.set(
