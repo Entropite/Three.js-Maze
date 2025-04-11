@@ -1,4 +1,4 @@
-let scene, camera, renderer, controls, clock, skybox, skyboxTexture, maze;
+let scene, camera, renderer, controls, clock, skybox, skyboxTexture, maze, loader;
 let minimapCamera, minimapRenderer, playerMarker;
 
 const SPEED = 1;
@@ -77,8 +77,42 @@ function init() {
 
   createGrass();
 
+
+
   // Create the maze
   maze = generateMaze(MAZE_SIZE, MAZE_SIZE);
+
+  // The maze is 2d so it uses x and y coordinates even though in three.js, it actually uses x and z
+  const bunnyX = Math.floor(Math.random() * (MAZE_SIZE * 2 - 3)) + 2
+  const bunnyY = Math.floor(Math.random() * (MAZE_SIZE * 2 - 3)) + 2
+  for(i = -1; i <= 1; i++) {
+    for (j = -1; j <= 1; j++) {
+      maze[bunnyX + i][bunnyY + j] = 0;
+    }
+  }
+
+  
+  loader = new THREE.OBJLoader()
+
+  loader.load("public/bunny.obj", function (obj) {obj.position.set(bunnyX * WALL_WIDTH, 2, bunnyY * WALL_WIDTH); obj.scale.set(10, 10, 10);scene.add(obj);});
+
+  scene.add(createPlinth(bunnyX * WALL_WIDTH, bunnyY * WALL_WIDTH, 2.2));
+
+  // Randomly generate a teapot and a plinth somewhere in the maze
+  let teapotX, teapotY;
+  do {
+  teapotX = Math.floor(Math.random() * (MAZE_SIZE * 2 - 3)) + 2
+  teapotY = Math.floor(Math.random() * (MAZE_SIZE * 2 - 3)) + 2
+  } while (Math.abs(teapotX - bunnyX) + Math.abs(teapotY - bunnyY) <= 1);
+  for(i = -1; i <= 1; i++) {
+    for (j = -1; j <= 1; j++) {
+      maze[teapotX + i][teapotY + j] = 0;
+    }
+  }
+
+  loader.load("public/teapot.obj", function (obj) {obj.position.set(teapotX * WALL_WIDTH, 2, teapotY * WALL_WIDTH); obj.scale.set(0.6, 0.6, 0.6); scene.add(obj);});
+
+  scene.add(createPlinth(teapotX * WALL_WIDTH, teapotY * WALL_WIDTH, 2.2));
 
   // Make the maze have an entrance and exit
   maze[1][0] = 0;
@@ -90,6 +124,15 @@ function init() {
   setupMinimap();
 
   animate();
+}
+
+function createPlinth(x, z, height) {
+  plinthGeometry = new THREE.BoxGeometry(WALL_WIDTH, height, WALL_WIDTH);
+  plinthMaterial = new THREE.MeshBasicMaterial({color: 0xeeeef0});
+  plinth = new THREE.Mesh(plinthGeometry, plinthMaterial);
+  plinth.position.set(x, height / 2, z);
+
+  return plinth;
 }
 
 // New function to setup the minimap
@@ -440,73 +483,6 @@ function onKeyDown(event) {
   // Get valid position with wall sliding
   const validPos = getValidPosition(originalPos, newPos);
   camera.position.copy(validPos);
-}
-
-// Maze generation function using Depth-First Search algorithm
-function generateMaze(width, height) {
-  // Initialize maze with all walls
-  const maze = Array(width * 2 + 1)
-    .fill()
-    .map(() => Array(height * 2 + 1).fill(1));
-
-  // Create a grid for the maze paths
-  for (let i = 0; i < width; i++) {
-    for (let j = 0; j < height; j++) {
-      maze[i * 2 + 1][j * 2 + 1] = 0;
-    }
-  }
-
-  // DFS to carve paths
-  const stack = [{ x: 0, y: 0 }];
-  const visited = Array(width)
-    .fill()
-    .map(() => Array(height).fill(false));
-  visited[0][0] = true;
-
-  while (stack.length > 0) {
-    const { x, y } = stack[stack.length - 1];
-
-    // Get unvisited neighbors
-    const neighbors = [];
-    if (x > 0 && !visited[x - 1][y])
-      neighbors.push({ x: x - 1, y: y, dir: "left" });
-    if (x < width - 1 && !visited[x + 1][y])
-      neighbors.push({ x: x + 1, y: y, dir: "right" });
-    if (y > 0 && !visited[x][y - 1])
-      neighbors.push({ x: x, y: y - 1, dir: "up" });
-    if (y < height - 1 && !visited[x][y + 1])
-      neighbors.push({ x: x, y: y + 1, dir: "down" });
-
-    if (neighbors.length > 0) {
-      // Choose random neighbor
-      const neighbor = neighbors[Math.floor(Math.random() * neighbors.length)];
-
-      // Remove wall between current cell and chosen neighbor
-      switch (neighbor.dir) {
-        case "left":
-          maze[x * 2][y * 2 + 1] = 0;
-          break;
-        case "right":
-          maze[x * 2 + 2][y * 2 + 1] = 0;
-          break;
-        case "up":
-          maze[x * 2 + 1][y * 2] = 0;
-          break;
-        case "down":
-          maze[x * 2 + 1][y * 2 + 2] = 0;
-          break;
-      }
-
-      // Mark neighbor as visited and add to stack
-      visited[neighbor.x][neighbor.y] = true;
-      stack.push(neighbor);
-    } else {
-      // Backtrack
-      stack.pop();
-    }
-  }
-
-  return maze;
 }
 
 init();
